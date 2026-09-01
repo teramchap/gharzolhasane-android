@@ -7,13 +7,12 @@ import android.webkit.WebViewClient;
 import android.webkit.WebSettings;
 import android.webkit.WebChromeClient;
 import android.webkit.ValueCallback;
+import android.webkit.WebChromeClient.FileChooserParams;
 import android.content.Intent;
 import android.net.Uri;
 import android.graphics.Color;
 import android.view.Window;
 import android.view.WindowManager;
-import android.view.View;
-import android.view.WindowInsets;
 
 public class MainActivity extends Activity {
 
@@ -28,12 +27,10 @@ public class MainActivity extends Activity {
 
         requestWindowFeature(Window.FEATURE_NO_TITLE);
 
-        getWindow().setFlags(
-                WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                WindowManager.LayoutParams.FLAG_FULLSCREEN
-        );
-
-        getWindow().setNavigationBarColor(Color.BLACK);
+        // Fullscreen حذف شده تا نوار ناوبری فضای خودش را داشته باشد
+        if (android.os.Build.VERSION.SDK_INT >= 21) {
+            getWindow().setNavigationBarColor(Color.BLACK);
+        }
 
         webView = new WebView(this);
 
@@ -50,6 +47,7 @@ public class MainActivity extends Activity {
 
         webView.setWebViewClient(new WebViewClient());
 
+        // پشتیبانی از انتخاب و آپلود فایل/عکس
         webView.setWebChromeClient(new WebChromeClient() {
 
             @Override
@@ -64,61 +62,28 @@ public class MainActivity extends Activity {
 
                 filePathCallback = callback;
 
-                Intent intent;
-
                 try {
-                    intent = fileChooserParams.createIntent();
-                } catch (Exception e) {
-                    filePathCallback = null;
-                    return false;
-                }
+                    Intent intent =
+                            fileChooserParams.createIntent();
 
-                try {
                     startActivityForResult(
                             intent,
                             FILE_CHOOSER_REQUEST_CODE
                     );
+
+                    return true;
+
                 } catch (Exception e) {
+
                     filePathCallback = null;
                     return false;
                 }
-
-                return true;
             }
         });
 
-        // جلوگیری از قرار گرفتن محتوای سایت زیر نوار پایین گوشی
-        if (android.os.Build.VERSION.SDK_INT >= 23) {
-
-            webView.setOnApplyWindowInsetsListener(
-                    new View.OnApplyWindowInsetsListener() {
-
-                        @Override
-                        public WindowInsets onApplyWindowInsets(
-                                View v,
-                                WindowInsets insets) {
-
-                            int bottom =
-                                    insets.getSystemWindowInsetBottom();
-
-                            webView.setPadding(
-                                    0,
-                                    0,
-                                    0,
-                                    bottom
-                            );
-
-                            return insets;
-                        }
-                    }
-            );
-        }
-
-        webView.loadUrl("https://teramchap.github.io");
-
         setContentView(webView);
 
-        webView.requestApplyInsets();
+        webView.loadUrl("https://teramchap.github.io");
     }
 
     @Override
